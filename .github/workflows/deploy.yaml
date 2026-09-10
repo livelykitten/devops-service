@@ -42,7 +42,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           source: project.jar
-          target: /home/ubuntu/devops-server/output
+          target: /home/ubuntu/devops-service/output
 
       - name: SSH connection to EC2
         uses: appleboy/ssh-action@v1.0.3
