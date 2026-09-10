@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class AppController {
     @GetMapping("/")
     public String getMethodName() {
-        return "Hello, World";
+        return "Hello, World version 2";
     }
     
 }
