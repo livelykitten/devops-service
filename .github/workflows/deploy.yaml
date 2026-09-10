@@ -16,7 +16,7 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script_stop: true # if any of the steps fail, then regard this workflow as failed
           script: |
-            cd /home/ubuntu/devops_service
+            cd /home/ubuntu/devops-service
             git pull origin main
             ./gradle clean build
             sudo fuser -k -n tcp 8080 || true 
