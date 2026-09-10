@@ -45,7 +45,7 @@ jobs:
           target: /home/ubuntu/devops-service/output
 
       - name: SSH connection to EC2
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@latest
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
