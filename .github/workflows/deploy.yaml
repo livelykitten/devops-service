@@ -12,16 +12,18 @@ jobs:
         uses: actions/checkout@v4 # Repository에 저장된 코드를 불러오는 라이브러리
 
       # GitHub Actions에서 빌드하기 위해 JDK 필요
-      - name: JDK 21버전 설치
+      - name: JDK 17버전 설치
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: application.yml 파일 만들기
+      - name: application.yaml 파일 만들기
+        env:
+          APPLICATION_CONFIG: ${{ secrets.APPLICATION_PROPERTIES }}
         run: |
-          mkdir -p src/main/resources 
-          echo "${{ secrets.APPLICATION_PROPERTIES }}" > src/main/resources/application.yaml
+          mkdir -p src/main/resources
+          printf '%s\n' "$APPLICATION_CONFIG" > src/main/resources/application.yaml
 
       # 실행 권한이 없는 경우를 대비
       - name: gradlew 실행 권한 부여
@@ -30,34 +32,34 @@ jobs:
       - name: 테스트 및 빌드하기
         run: ./gradlew clean build
 
-      # 편의를 위해 파일 이름 및 위치 변경 (필수X)
-      - name: 빌드된 파일 이름 변경하기
-        run: mv ./build/libs/*SNAPSHOT.jar ./project.jar
-
-      # SCP: EC2로 파일을 전송할 때 쓰는 방식
-      - name: SCP로 EC2에 빌드된 파일 전송하기
-        uses: appleboy/scp-action@v0.1.7
+      - name: Set AWS Credentials to access AWS Resource
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: project.jar
-          target: /home/ubuntu/devops-service/output
+          aws-region: ap-south-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      
+      - name: Sign-in into ECR 
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: SSH connection to EC2
+      - name: Build image based on the Dockerfile
+        run: docker build -t devops-server .
+
+      - name: Add Tag to the Docker image
+        run: docker tag devops-server ${{ steps.login-ecr.outputs.registry }}/devops-server:latest
+
+      - name: Push Docker image to ECR 
+        run: docker push ${{ steps.login-ecr.outputs.registry }}/devops-server:latest
+
+      - name: Login into EC2 using ssh
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          # script_stop: true # if any of the steps fail, then regard this workflow as failed
           script: |
-            rm -rf /home/ubuntu/devops-service/current
-            mkdir /home/ubuntu/devops-service/current
-            cd /home/ubuntu
-
-            mv devops-service/output/project.jar devops-service/current/project.jar
-            cd /home/ubuntu/devops-service/current
-            sudo fuser -k -n tcp 8080 || true 
-            nohup java -jar project.jar > ./output.log 2>&1 &
-            rm -rf /home/ubuntu/devops-service/output
+            docker stop devops-server || true
+            docker rm devops-server || true
+            docker pull ${{ steps.login-ecr.outputs.registry }}/devops-server:latest
+            docker run -d --name devops-server -p 8080:8080 ${{ steps.login-ecr.outputs.registry }}/devops-server:latest
