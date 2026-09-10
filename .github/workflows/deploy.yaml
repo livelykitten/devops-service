@@ -1,0 +1,26 @@
+name: devops_services workflow
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH connection to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script_stop: true # if any of the steps fail, then regard this workflow as failed
+          script: |
+            cd /home/ubuntu/devops_service
+            git pull origin main
+            ./gradle clean build
+            sudo fuser -k -n tcp 8080 || true 
+            nohub java -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &
+        run: 
+
+      - name: 
