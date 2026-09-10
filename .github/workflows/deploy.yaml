@@ -47,10 +47,10 @@ jobs:
         run: docker build -t devops-server .
 
       - name: Add Tag to the Docker image
-        run: docker tag devops-server ${{ steps.login-ecr.outputs.registry }}/devops-server:latest
+        run: docker tag devops-server ${{ steps.login-ecr.outputs.registry }}/lg15-devops-server-repo/devops-server:latest
 
       - name: Push Docker image to ECR 
-        run: docker push ${{ steps.login-ecr.outputs.registry }}/devops-server:latest
+        run: docker push ${{ steps.login-ecr.outputs.registry }}/lg15-devops-server-repo/devops-server:latest
 
       - name: Login into EC2 using ssh
         uses: appleboy/ssh-action@v1.2.2
@@ -61,5 +61,5 @@ jobs:
           script: |
             docker stop devops-server || true
             docker rm devops-server || true
-            docker pull ${{ steps.login-ecr.outputs.registry }}/devops-server:latest
-            docker run -d --name devops-server -p 8080:8080 ${{ steps.login-ecr.outputs.registry }}/devops-server:latest
+            docker pull ${{ steps.login-ecr.outputs.registry }}/lg15-devops-server-repo/devops-server:latest
+            docker run -d --name devops-server -p 8080:8080 ${{ steps.login-ecr.outputs.registry }}/lg15-devops-server-repo/devops-server:latest
