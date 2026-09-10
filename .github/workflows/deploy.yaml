@@ -21,6 +21,3 @@ jobs:
             ./gradle clean build
             sudo fuser -k -n tcp 8080 || true 
             nohub java -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &
-        run: 
-
-      - name: 
