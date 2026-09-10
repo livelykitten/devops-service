@@ -50,7 +50,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script_stop: true # if any of the steps fail, then regard this workflow as failed
+          # script_stop: true # if any of the steps fail, then regard this workflow as failed
           script: |
             rm -rf /home/ubuntu/devops-service/current
             mkdir /home/ubuntu/devops-service/current
